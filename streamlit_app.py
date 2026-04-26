@@ -88,11 +88,8 @@ def _sentiment_theme(label: str) -> dict[str, str]:
     }
 
 
-def _render_sentiment_bar(
-    width_pct: float, theme: dict[str, str], compound: float
-) -> None:
+def _render_sentiment_bar(width_pct: float, theme: dict[str, str]) -> None:
     w = min(max(width_pct, 0.0), 100.0)
-    c_html = f"{compound:+.3f}"
     st.markdown(
         f"""
         <div class="sbar-wrap" style="margin: 0.25rem 0 0.1rem 0;">
@@ -108,7 +105,6 @@ def _render_sentiment_bar(
               box-shadow: 0 0 20px {theme['glow']};
               transition: width 0.4s ease;"></div>
           </div>
-          <p style="margin: 0.5rem 0 0; font-size: 0.85rem; color: #7d8a9a;">Compound: <span style="color: #e8edf4; font-weight: 600;">{html.escape(c_html)}</span> · bar shows polarity on a −1 … +1 scale</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -256,8 +252,7 @@ if go:
                 with d:
                     st.metric("Model", out.get("model", "VADER"))
 
-                _render_sentiment_bar(width_pct, th, compound)
-                st.caption("Bar fill follows compound (−1 = left, +1 = right). Color matches sentiment.")
+                _render_sentiment_bar(width_pct, th)
 
                 with st.expander("Raw scores & JSON", expanded=False):
                     st.json({"label": out["label"], "confidence": conf, "compound": compound, "scores": scores})
