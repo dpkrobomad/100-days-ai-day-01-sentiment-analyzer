@@ -58,6 +58,10 @@ pytest -q
 ruff check src tests
 ```
 
+## Video (YouTube)
+
+- **`YOUTUBE_SCRIPT.md`** — full **screen-recording** script: capture layout, chapters, on-screen callouts, narration, metadata, and a **Shorts** cut-down. Use it when recording a long-form or Short walkthrough.
+
 ## Project layout
 
 | Path | Purpose |
@@ -68,7 +72,8 @@ ruff check src tests
 | `src/sentiment_analyzer/config.py` | `SENTIMENT_*` env settings |
 | `streamlit_app.py` | Optional demo UI |
 | `LINKEDIN_POST.md` | Ready-to-post copy |
-| `DEMO_SCRIPT.md` | Step-by-step demo script |
+| `DEMO_SCRIPT.md` | Step-by-step live/LinkedIn demo |
+| `YOUTUBE_SCRIPT.md` | YouTube / screen-capture walkthrough |
 
 ## Author
 
