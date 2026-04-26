@@ -135,7 +135,7 @@ if go:
                     out = _via_api(t, api_base)
                 else:
                     r = analyze_sentiment(t)
-                    out = r.model_dump()
+                    out = r.model_dump(mode="json")
             except httpx.HTTPError as e:  # noqa: BLE001
                 st.error(f"API error: {e!s}")
             except Exception as e:  # noqa: BLE001

@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class SentimentLabel(str, Enum):
@@ -31,6 +31,8 @@ class SentimentRequest(BaseModel):
 
 
 class SentimentResponse(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+
     label: SentimentLabel
     confidence: float = Field(
         ...,
