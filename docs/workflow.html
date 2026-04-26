@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sentiment Analyzer — Architecture & workflow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0c10;
+        --bg2: #12161d;
+        --card: #161b24;
+        --border: #2a3240;
+        --text: #e8edf4;
+        --muted: #8b9aaf;
+        --accent: #5b8cff;
+        --pos: #3ecf8e;
+        --neg: #e85d6a;
+        --neu: #8b9aad;
+        --track: #1a2030;
+        --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+        --r: 14px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Outfit", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+        min-height: 100vh;
+        background-image: radial-gradient(ellipse 100% 60% at 10% 0%, #141a2e 0%, var(--bg) 50%);
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 4rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.35rem;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 0.95rem;
+        margin: 0 0 2.25rem;
+        max-width: 52ch;
+      }
+      h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text);
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
+        letter-spacing: -0.01em;
+      }
+      .diagram {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin: 0 0 1rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        justify-content: center;
+        gap: 0.75rem;
+      }
+      .box {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        min-width: 140px;
+        flex: 1 1 auto;
+        text-align: center;
+      }
+      .box strong {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      .box small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.75rem;
+        line-height: 1.35;
+      }
+      .box.path-a {
+        border-color: rgba(62, 207, 142, 0.35);
+        box-shadow: 0 0 0 1px rgba(62, 207, 142, 0.08);
+      }
+      .box.path-b {
+        border-color: rgba(91, 140, 255, 0.4);
+        box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.1);
+      }
+      .box.core {
+        border-color: rgba(62, 207, 142, 0.45);
+        background: linear-gradient(160deg, #141c18 0%, #12161d 100%);
+      }
+      .arrow {
+        text-align: center;
+        color: var(--muted);
+        font-size: 1.25rem;
+        padding: 0.2rem 0;
+        line-height: 1;
+      }
+      .label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        text-align: center;
+        margin: 0.5rem 0 0.25rem;
+      }
+      .split {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+      }
+      @media (max-width: 640px) {
+        .split {
+          grid-template-columns: 1fr;
+        }
+        .split .arrow {
+          transform: rotate(90deg);
+        }
+      }
+      .seq {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem 0.6rem;
+        margin: 0.5rem 0;
+      }
+      .step {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.55rem 0.8rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .arrow-inline {
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .err {
+        color: var(--neg);
+        font-size: 0.8rem;
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .stack .box {
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .stack .box span:last-child {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+      .footer-note {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 2.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--border);
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        background: rgba(91, 140, 255, 0.15);
+        color: #a8c4ff;
+        margin-left: 0.35rem;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Sentiment API — workflow</h1>
+      <p class="lead">
+        Day 1 project: how traffic reaches VADER, and where FastAPI, Pydantic, and Streamlit sit.
+      </p>
+
+      <h2>1. System overview</h2>
+      <div class="diagram" aria-label="System overview diagram">
+        <div class="row">
+          <div class="box" style="flex: 1 1 200px">
+            <strong>Streamlit</strong>
+            <small>streamlit_app.py</small>
+          </div>
+          <div class="box" style="flex: 1 1 200px">
+            <strong>Other clients</strong>
+            <small>curl · tests · webhooks</small>
+          </div>
+          <div class="box" style="flex: 1 1 200px">
+            <strong>OpenAPI / Swagger</strong>
+            <small>browser @ /docs</small>
+          </div>
+        </div>
+        <p class="label" style="margin-top: 0.75rem">From Streamlit — two modes</p>
+        <div class="row" style="align-items: center">
+          <div class="box path-a" style="flex: 1 1 200px; text-align: left">
+            <strong>Path A <span class="badge">default</span></strong>
+            <small>Python import → <code style="color: #9df5c8">service.analyze_sentiment</code> — no HTTP
+            </small>
+          </div>
+        </div>
+        <div class="arrow" aria-hidden="true" style="padding: 0.15rem 0 0.35rem; font-size: 0.9rem; color: var(--pos)">
+          ⬇ skips API
+        </div>
+        <div class="row">
+          <div class="box core" style="max-width: 100%; text-align: left">
+            <strong>service.py + VADER</strong>
+            <small>path A ends here; path B and external clients go through the API first</small>
+          </div>
+        </div>
+        <p class="label" style="margin-top: 1.1rem">HTTP path (Streamlit toggle + other clients + Swagger)</p>
+        <div class="row" style="align-items: center">
+          <div class="box path-b" style="flex: 1 1 200px; text-align: left">
+            <strong>Path B + external</strong>
+            <small>POST <code style="color: #a8c4ff">/api/v1/sentiment</code> to Uvicorn</small>
+          </div>
+        </div>
+        <div class="arrow" aria-hidden="true" style="padding: 0.2rem 0">⬇</div>
+        <div class="row">
+          <div class="box" style="border-color: rgba(91, 140, 255, 0.4); max-width: 100%; text-align: left">
+            <strong>Uvicorn → FastAPI</strong>
+            <small>main.py · CORS · /health</small>
+          </div>
+        </div>
+        <div class="arrow" aria-hidden="true">⬇</div>
+        <div class="row">
+          <div class="box" style="max-width: 100%; text-align: left">
+            <strong>Pydantic</strong>
+            <small>validates <code style="color: #c5d0e0">SentimentRequest</code> / response shape</small>
+          </div>
+        </div>
+        <div class="arrow" aria-hidden="true">⬇</div>
+        <div class="row">
+          <div class="box core" style="max-width: 100%; text-align: left">
+            <strong>service.py + VADER</strong>
+            <small>same module as path A</small>
+          </div>
+        </div>
+        <p style="margin: 1rem 0 0; font-size: 0.82rem; color: var(--muted)">
+          One scoring implementation; the API adds validation, OpenAPI, and a stable wire format.
+        </p>
+      </div>
+
+      <h2>2. API request path</h2>
+      <div class="diagram" aria-label="API sequence">
+        <div class="seq">
+          <span class="step">Client</span>
+          <span class="arrow-inline" aria-hidden="true">→</span>
+          <span class="step">POST JSON</span>
+          <span class="arrow-inline">→</span>
+          <span class="step">FastAPI</span>
+          <span class="arrow-inline">→</span>
+          <span class="step">Pydantic</span>
+        </div>
+        <p class="err" style="text-align: center; margin: 0.4rem 0 0.8rem">invalid / empty text → 422</p>
+        <div class="seq">
+          <span class="step">Pydantic OK</span>
+          <span class="arrow-inline">→</span>
+          <span class="step">VADER in service</span>
+          <span class="arrow-inline">→</span>
+          <span class="step">200 JSON</span>
+        </div>
+        <p style="margin: 0.9rem 0 0; font-size: 0.82rem; color: var(--muted)">
+          On app startup, <code style="color: #c5d0e0">warm_vader()</code> runs in lifespan so the first
+          user request is not cold.
+        </p>
+      </div>
+
+      <h2>3. Streamlit — local engine only</h2>
+      <div class="diagram" aria-label="Streamlit local path">
+        <div class="seq">
+          <span class="step">User</span>
+          <span class="arrow-inline">→</span>
+          <span class="step">Streamlit</span>
+          <span class="arrow-inline">→</span>
+          <span class="step">analyze_sentiment</span>
+          <span class="arrow-inline">→</span>
+          <span class="step">UI metrics + bar</span>
+        </div>
+        <p style="margin: 0.8rem 0 0; font-size: 0.82rem; color: var(--muted)">
+          Same return shape as the API; use <code style="color: #c5d0e0">model_dump(mode="json")</code> to
+          match wire format.
+        </p>
+      </div>
+
+      <h2>4. Module stack</h2>
+      <div class="diagram" aria-label="File layers">
+        <div class="stack">
+          <div class="box">
+            <span><code>.env</code> · <code>SENTIMENT_*</code></span>
+            <span>config</span>
+          </div>
+          <div class="arrow" style="font-size: 0.9rem">⬇</div>
+          <div class="box">
+            <span><code>config.py</code> · Settings</span>
+            <span>Pydantic settings</span>
+          </div>
+          <div class="arrow" style="font-size: 0.9rem">⬇</div>
+          <div class="box">
+            <span><code>main.py</code> · routes + CORS + lifespan</span>
+            <span>FastAPI</span>
+          </div>
+          <div class="arrow" style="font-size: 0.9rem">⬇</div>
+          <div class="box">
+            <span><code>schemas.py</code></span>
+            <span>contracts</span>
+          </div>
+          <div class="arrow" style="font-size: 0.9rem">⬇</div>
+          <div class="box" style="border-color: rgba(62, 207, 142, 0.35)">
+            <span><code>service.py</code> → VADER</span>
+            <span>scoring</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="footer-note">
+        Open this file in any browser. Repo:
+        <a href="https://github.com/dpkrobomad/100-days-ai-day-01-sentiment-analyzer" style="color: var(--accent)"
+          >100-days-ai-day-01-sentiment-analyzer</a
+        >
+        · Day 1
+      </p>
+    </div>
+  </body>
+</html>

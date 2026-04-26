@@ -54,7 +54,8 @@ ruff check src tests
 
 ## Architecture
 
-Mermaid workflow diagrams (data flow, API vs local Streamlit, components): **[docs/WORKFLOW.md](docs/WORKFLOW.md)**
+- **HTML diagram (recommended):** open [docs/workflow.html](docs/workflow.html) in a browser.  
+- **Text summary + links:** [docs/WORKFLOW.md](docs/WORKFLOW.md)
 
 ## Layout
 

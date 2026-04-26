@@ -1,104 +1,32 @@
 # Workflow & architecture
 
-How requests move through the **Day 1 Sentiment Analyzer** project: FastAPI, shared scoring, and the Streamlit app (two modes).
+**Visual diagram (HTML — open in a browser for best look):** [`workflow.html`](workflow.html)  
+Also viewable on GitHub if you use **Raw** + save locally, or open the file from a clone:  
+`file:///.../docs/workflow.html`
 
-## High-level data flow
+The HTML page is self-contained (dark theme, **Outfit** font); no Mermaid or external diagram tools.
 
-```mermaid
-flowchart TB
-    subgraph clients [Clients]
-        SW[Streamlit app\nstreamlit_app.py]
-        BC[Other HTTP clients\ncurl, webhooks, tests]
-        SWG[OpenAPI / Swagger\nbrowser at /docs]
-    end
+## Text summary
 
-    subgraph api [FastAPI service]
-        FA[Uvicorn → sentiment_analyzer.main:app]
-        RT[GET /health\nPOST /api/v1/sentiment]
-        PD[Pydantic\nSentimentRequest / SentimentResponse]
-    end
+1. **Streamlit** can score in two ways: **Path A** — in-process `analyze_sentiment` (default); **Path B** — `POST` to the running Uvicorn app when “Call HTTP API” is on.  
+2. **curl, tests, OpenAPI** only use the **HTTP** path: FastAPI → Pydantic → `service.py` / VADER.  
+3. **Path A** skips FastAPI; both paths use the same **service** module.  
+4. On startup, **lifespan** runs `warm_vader()`.
 
-    subgraph core [Core]
-        SVC[service.py\nanalyze_sentiment + VADER]
-    end
+## File map
 
-    SW -->|A. Local: import| SVC
-    SW -->|B. HTTP: toggle on| RT
-    BC --> RT
-    SWG --> RT
-    RT --> PD
-    PD --> SVC
-    FA --> RT
+| Piece            | Role                                      |
+| ---------------- | ----------------------------------------- |
+| `streamlit_app.py` | UI; local scoring **or** `httpx` → API  |
+| `main.py`        | App, CORS, routes, lifespan                |
+| `service.py`     | VADER, `analyze_sentiment`                 |
+| `schemas.py`     | Request/response models                      |
+| `config.py`      | `SENTIMENT_*` env                            |
+
+## Plain-text flow (for README / slides)
+
+```text
+[Streamlit local]  import  →  service.py → VADER
+[Streamlit HTTP]  POST  →  Uvicorn → FastAPI → Pydantic → service.py → VADER
+[Others / /docs]  POST  →  Uvicorn → FastAPI → Pydantic → service.py → VADER
 ```
-
-- **Path A (default in Streamlit):** UI calls `analyze_sentiment()` in process — no HTTP, same logic as the API.  
-- **Path B (sidebar “Call HTTP API”):** UI sends `POST` to the running Uvicorn server.  
-- **Path C:** Any client uses the public JSON contract; core logic is always `service.py`.
-
-## Request sequence (API path)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant C as Client (curl, Swagger, Streamlit+HTTP)
-    participant F as FastAPI
-    participant P as Pydantic
-    participant V as VADER\n(service.py)
-
-    C->>F: POST /api/v1/sentiment JSON body
-    F->>P: validate SentimentRequest
-    alt invalid text
-        P-->>C: 422
-    end
-    P->>V: text string
-    V->>V: SentimentIntensityAnalyzer
-    V-->>F: SentimentResponse
-    F-->>C: 200 JSON label, confidence, compound, scores
-```
-
-**Startup:** `lifespan` calls `warm_vader()` so the lexicon is loaded before the first request.
-
-## Request sequence (Streamlit, local engine)
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant St as Streamlit
-    participant V as service.analyze_sentiment
-
-    U->>St: text + Analyze
-    St->>V: in-process call
-    V-->>St: Pydantic model → model_dump
-    St-->>U: metrics + sentiment bar
-```
-
-## Component view
-
-```mermaid
-flowchart LR
-    subgraph config
-        ENV[.env / SENTIMENT_*]
-    end
-    ENV --> CFG[config.py / Settings]
-    CFG --> main[main.py]
-
-    main --> COR[CORS]
-    main --> R1[/api/v1/sentiment]
-    main --> R0[/health]
-
-    R1 --> SCH[schemas.py]
-    SCH --> SVC[service.py]
-    SVC --> VAD[VADER lexicon]
-```
-
-## File map (short)
-
-| Piece | Role |
-|-------|------|
-| `streamlit_app.py` | UI; local scoring **or** `httpx` → API |
-| `main.py` | Routes, CORS, OpenAPI, lifespan |
-| `service.py` | VADER, `SentimentResponse` |
-| `schemas.py` | Request/response contracts |
-| `config.py` | `SENTIMENT_*` env |
-
-GitHub and many Markdown viewers render the Mermaid blocks above. For a PNG/SVG export, use [Mermaid Live Editor](https://mermaid.live) or a docs build that supports Mermaid.
