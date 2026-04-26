@@ -36,6 +36,17 @@ SAMPLES = [
     "This is the best launch we've had — the team really delivered.",
     "Terrible support. Still waiting for a refund. Very disappointed.",
     "The meeting is at 3pm tomorrow. Please join the call.",
+    "Absolutely thrilled — five stars, would recommend to everyone.",
+    "Worst experience I've had on this platform. Never again.",
+    "Please find the Q3 report attached. Let me know if you need the raw data.",
+    "Flight is at 4:20pm, gate 12, terminal B. See you there.",
+    "Not bad, could be a bit faster, but it gets the job done.",
+    "I'm furious. Three follow-ups and nobody has called me back.",
+    "Thank you — that was exactly the fix I needed. Really appreciate the quick help.",
+    "Waste of money. Broke after two days and the warranty is useless.",
+    "Oh great, another delay. Just what I needed today.",
+    "The file is 14 pages, mostly tables. Summary is on page 2.",
+    "Loving this so far! Interface is clean and the export just works.",
 ]
 
 
