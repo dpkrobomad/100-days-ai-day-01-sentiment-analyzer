@@ -3,355 +3,445 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sentiment Analyzer — Architecture & workflow</title>
+    <title>Sentiment API — workflow diagram</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        --bg: #0a0c10;
-        --bg2: #12161d;
-        --card: #161b24;
-        --border: #2a3240;
-        --text: #e8edf4;
-        --muted: #8b9aaf;
+        --bg: #0b0d12;
+        --panel: #11141c;
+        --grid: rgba(100, 120, 180, 0.06);
+        --border: #2a3142;
+        --text: #e8ecf4;
+        --muted: #8b95a8;
+        --node: #161c28;
+        --node-hi: #1a2234;
+        --stroke: #4a5a7a;
         --accent: #5b8cff;
-        --pos: #3ecf8e;
-        --neg: #e85d6a;
-        --neu: #8b9aad;
-        --track: #1a2030;
-        --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-        --r: 14px;
+        --path-a: #2fd49c;
+        --path-b: #5b8cff;
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        font-family: "Outfit", system-ui, sans-serif;
+        font-family: "Inter", system-ui, sans-serif;
         background: var(--bg);
         color: var(--text);
-        line-height: 1.5;
         min-height: 100vh;
-        background-image: radial-gradient(ellipse 100% 60% at 10% 0%, #141a2e 0%, var(--bg) 50%);
+        background-image: radial-gradient(ellipse 80% 50% at 15% 0%, #151a2e 0%, var(--bg) 50%);
       }
-      .wrap {
-        max-width: 900px;
+      .page {
+        max-width: 1080px;
         margin: 0 auto;
-        padding: 2.5rem 1.5rem 4rem;
+        padding: 1.75rem 1rem 3rem;
       }
       h1 {
-        font-size: 1.75rem;
+        font-size: 1.4rem;
         font-weight: 700;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.03em;
         margin: 0 0 0.35rem;
       }
-      .lead {
+      .sub {
         color: var(--muted);
-        font-size: 0.95rem;
-        margin: 0 0 2.25rem;
-        max-width: 52ch;
+        font-size: 0.9rem;
+        margin: 0 0 1.75rem;
+        line-height: 1.45;
+        max-width: 56ch;
       }
       h2 {
-        font-size: 1.1rem;
+        font-size: 0.8rem;
         font-weight: 600;
-        color: var(--text);
-        margin: 2.5rem 0 1rem;
-        padding-bottom: 0.4rem;
-        border-bottom: 1px solid var(--border);
-        letter-spacing: -0.01em;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        margin: 0 0 0.5rem 1rem;
       }
-      .diagram {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: var(--r);
-        padding: 1.5rem;
-        box-shadow: var(--shadow);
-        margin: 0 0 1rem;
-      }
-      .row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: stretch;
-        justify-content: center;
-        gap: 0.75rem;
-      }
-      .box {
-        background: var(--bg2);
+      .canvas {
+        background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 12px;
-        padding: 0.85rem 1rem;
-        min-width: 140px;
-        flex: 1 1 auto;
-        text-align: center;
+        overflow: auto;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        margin-bottom: 2rem;
       }
-      .box strong {
+      .canvas svg {
         display: block;
-        font-size: 0.9rem;
+        min-width: 100%;
+        height: auto;
+        vertical-align: top;
+      }
+      .node-title {
+        font-size: 14px;
         font-weight: 600;
-        margin-bottom: 0.25rem;
+        fill: #f0f4fc;
       }
-      .box small {
-        display: block;
-        color: var(--muted);
-        font-size: 0.75rem;
-        line-height: 1.35;
-      }
-      .box.path-a {
-        border-color: rgba(62, 207, 142, 0.35);
-        box-shadow: 0 0 0 1px rgba(62, 207, 142, 0.08);
-      }
-      .box.path-b {
-        border-color: rgba(91, 140, 255, 0.4);
-        box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.1);
-      }
-      .box.core {
-        border-color: rgba(62, 207, 142, 0.45);
-        background: linear-gradient(160deg, #141c18 0%, #12161d 100%);
-      }
-      .arrow {
-        text-align: center;
-        color: var(--muted);
-        font-size: 1.25rem;
-        padding: 0.2rem 0;
-        line-height: 1;
-      }
-      .label {
-        font-size: 0.68rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-        text-align: center;
-        margin: 0.5rem 0 0.25rem;
-      }
-      .split {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: center;
-        gap: 0.5rem;
-        margin: 0.5rem 0;
-      }
-      @media (max-width: 640px) {
-        .split {
-          grid-template-columns: 1fr;
-        }
-        .split .arrow {
-          transform: rotate(90deg);
-        }
-      }
-      .seq {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: center;
-        gap: 0.4rem 0.6rem;
-        margin: 0.5rem 0;
-      }
-      .step {
-        background: var(--bg2);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 0.55rem 0.8rem;
-        font-size: 0.85rem;
+      .node-sub {
+        font-size: 11px;
         font-weight: 500;
+        fill: var(--muted);
       }
-      .arrow-inline {
-        color: var(--accent);
+      .edge-label {
+        font-size: 10px;
         font-weight: 600;
-        font-size: 0.9rem;
+        fill: #a8b4cc;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
       }
-      .err {
-        color: var(--neg);
-        font-size: 0.8rem;
+      .edge-label-a {
+        fill: var(--path-a);
       }
-      .stack {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
+      .edge-label-b {
+        fill: var(--path-b);
       }
-      .stack .box {
-        text-align: left;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .stack .box span:last-child {
-        color: var(--muted);
-        font-size: 0.78rem;
-      }
-      .footer-note {
+      .footer {
         font-size: 0.8rem;
         color: var(--muted);
-        margin-top: 2.5rem;
+        margin-top: 1.5rem;
         padding-top: 1.25rem;
         border-top: 1px solid var(--border);
       }
-      .badge {
-        display: inline-block;
-        font-size: 0.65rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        padding: 0.2rem 0.5rem;
-        border-radius: 6px;
-        background: rgba(91, 140, 255, 0.15);
-        color: #a8c4ff;
-        margin-left: 0.35rem;
-        vertical-align: middle;
+      .footer a {
+        color: var(--accent);
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <h1>Sentiment API — workflow</h1>
-      <p class="lead">
-        Day 1 project: how traffic reaches VADER, and where FastAPI, Pydantic, and Streamlit sit.
+    <div class="page">
+      <h1>End-to-end workflow</h1>
+      <p class="sub">
+        Read like a pipeline diagram: boxes are processes, arrows are data flow. Path A = in-process
+        (no HTTP). Path B and everyone else = HTTP to the same scoring core.
       </p>
 
-      <h2>1. System overview</h2>
-      <div class="diagram" aria-label="System overview diagram">
-        <div class="row">
-          <div class="box" style="flex: 1 1 200px">
-            <strong>Streamlit</strong>
-            <small>streamlit_app.py</small>
-          </div>
-          <div class="box" style="flex: 1 1 200px">
-            <strong>Other clients</strong>
-            <small>curl · tests · webhooks</small>
-          </div>
-          <div class="box" style="flex: 1 1 200px">
-            <strong>OpenAPI / Swagger</strong>
-            <small>browser @ /docs</small>
-          </div>
-        </div>
-        <p class="label" style="margin-top: 0.75rem">From Streamlit — two modes</p>
-        <div class="row" style="align-items: center">
-          <div class="box path-a" style="flex: 1 1 200px; text-align: left">
-            <strong>Path A <span class="badge">default</span></strong>
-            <small>Python import → <code style="color: #9df5c8">service.analyze_sentiment</code> — no HTTP
-            </small>
-          </div>
-        </div>
-        <div class="arrow" aria-hidden="true" style="padding: 0.15rem 0 0.35rem; font-size: 0.9rem; color: var(--pos)">
-          ⬇ skips API
-        </div>
-        <div class="row">
-          <div class="box core" style="max-width: 100%; text-align: left">
-            <strong>service.py + VADER</strong>
-            <small>path A ends here; path B and external clients go through the API first</small>
-          </div>
-        </div>
-        <p class="label" style="margin-top: 1.1rem">HTTP path (Streamlit toggle + other clients + Swagger)</p>
-        <div class="row" style="align-items: center">
-          <div class="box path-b" style="flex: 1 1 200px; text-align: left">
-            <strong>Path B + external</strong>
-            <small>POST <code style="color: #a8c4ff">/api/v1/sentiment</code> to Uvicorn</small>
-          </div>
-        </div>
-        <div class="arrow" aria-hidden="true" style="padding: 0.2rem 0">⬇</div>
-        <div class="row">
-          <div class="box" style="border-color: rgba(91, 140, 255, 0.4); max-width: 100%; text-align: left">
-            <strong>Uvicorn → FastAPI</strong>
-            <small>main.py · CORS · /health</small>
-          </div>
-        </div>
-        <div class="arrow" aria-hidden="true">⬇</div>
-        <div class="row">
-          <div class="box" style="max-width: 100%; text-align: left">
-            <strong>Pydantic</strong>
-            <small>validates <code style="color: #c5d0e0">SentimentRequest</code> / response shape</small>
-          </div>
-        </div>
-        <div class="arrow" aria-hidden="true">⬇</div>
-        <div class="row">
-          <div class="box core" style="max-width: 100%; text-align: left">
-            <strong>service.py + VADER</strong>
-            <small>same module as path A</small>
-          </div>
-        </div>
-        <p style="margin: 1rem 0 0; font-size: 0.82rem; color: var(--muted)">
-          One scoring implementation; the API adds validation, OpenAPI, and a stable wire format.
-        </p>
+      <h2>Main architecture</h2>
+      <div class="canvas" role="img" aria-label="Architecture workflow: clients to VADER">
+        <svg
+          viewBox="0 0 920 480"
+          xmlns="http://www.w3.org/2000/svg"
+          style="user-select: none; font-family: Inter, system-ui, sans-serif"
+        >
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--grid)" stroke-width="0.5" />
+            </pattern>
+            <marker
+              id="arr"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#5c6d8e" />
+            </marker>
+            <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#1fa86e" />
+            </marker>
+            <marker id="arr-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a7aff" />
+            </marker>
+          </defs>
+          <rect x="0" y="0" width="920" height="480" fill="url(#grid)" />
+          <text x="26" y="32" class="node-sub" style="font-size: 10px; fill: #5c6575; font-weight: 600">
+            entry points
+          </text>
+          <text x="26" y="200" class="node-sub" style="font-size: 10px; fill: #5c6575; font-weight: 600">
+            request path
+          </text>
+          <text x="26" y="318" class="node-sub" style="font-size: 10px; fill: #5c6575; font-weight: 600">
+            core
+          </text>
+
+          <!-- Top row: clients -->
+          <g id="n-stream">
+            <rect
+              x="64"
+              y="52"
+              width="200"
+              height="72"
+              rx="10"
+              fill="var(--node)"
+              stroke="var(--border)"
+              stroke-width="1.5"
+            />
+            <text x="164" y="80" text-anchor="middle" class="node-title">Streamlit</text>
+            <text x="164" y="100" text-anchor="middle" class="node-sub">streamlit_app.py</text>
+          </g>
+          <g id="n-curl">
+            <rect
+              x="360"
+              y="52"
+              width="200"
+              height="72"
+              rx="10"
+              fill="var(--node-hi)"
+              stroke="var(--border)"
+              stroke-width="1.5"
+            />
+            <text x="460" y="80" text-anchor="middle" class="node-title">HTTP clients</text>
+            <text x="460" y="100" text-anchor="middle" class="node-sub">curl · tests · apps</text>
+          </g>
+          <g id="n-doc">
+            <rect
+              x="656"
+              y="52"
+              width="200"
+              height="72"
+              rx="10"
+              fill="var(--node-hi)"
+              stroke="var(--border)"
+              stroke-width="1.5"
+            />
+            <text x="756" y="80" text-anchor="middle" class="node-title">OpenAPI / Swagger</text>
+            <text x="756" y="100" text-anchor="middle" class="node-sub">/docs in browser</text>
+          </g>
+
+          <!-- Middle: API stack -->
+          <g id="n-fastapi">
+            <rect
+              x="320"
+              y="212"
+              width="280"
+              height="88"
+              rx="10"
+              fill="var(--node-hi)"
+              stroke="var(--accent)"
+              stroke-width="1.5"
+              opacity="0.95"
+            />
+            <text x="460" y="244" text-anchor="middle" class="node-title">Uvicorn + FastAPI</text>
+            <text x="460" y="264" text-anchor="middle" class="node-sub">main.py · CORS · /health</text>
+            <text x="460" y="284" text-anchor="middle" class="node-sub">POST /api/v1/sentiment</text>
+          </g>
+          <g id="n-pydantic">
+            <rect
+              x="350"
+              y="332"
+              width="220"
+              height="56"
+              rx="8"
+              fill="var(--node)"
+              stroke="var(--border)"
+              stroke-width="1.5"
+            />
+            <text x="460" y="360" text-anchor="middle" class="node-title">Pydantic</text>
+            <text x="460" y="376" text-anchor="middle" class="node-sub">request/response validation</text>
+          </g>
+          <g id="n-vader">
+            <rect
+              x="330"
+              y="406"
+              width="260"
+              height="58"
+              rx="10"
+              fill="#14241c"
+              stroke="var(--path-a)"
+              stroke-width="1.5"
+            />
+            <text x="460" y="432" text-anchor="middle" class="node-title" fill="#8fe8c0">service.py + VADER</text>
+            <text x="460" y="450" text-anchor="middle" class="node-sub" fill="#5a7d68">lexicon scoring</text>
+          </g>
+
+          <!-- Edges: HTTP / Swagger -> FastAPI (merge) -->
+          <path
+            d="M 460 124 L 460 210"
+            fill="none"
+            stroke="#5c6d8e"
+            stroke-width="2"
+            marker-end="url(#arr)"
+          />
+          <path
+            d="M 756 124 L 756 198 L 460 198 L 460 210"
+            fill="none"
+            stroke="#5c6d8e"
+            stroke-width="2"
+            marker-end="url(#arr)"
+          />
+          <text x="600" y="192" class="edge-label" text-anchor="middle">https</text>
+
+          <!-- Path B: Streamlit -> FastAPI (toggle on) -->
+          <path
+            d="M 164 124 L 164 200 L 318 210"
+            fill="none"
+            stroke="var(--path-b)"
+            stroke-width="2.2"
+            marker-end="url(#arr-b)"
+          />
+          <text x="228" y="192" class="edge-label-b">B · call api</text>
+
+          <!-- Path A: Streamlit -> VADER (in-process, bypasses web stack) -->
+          <path
+            d="M 164 124 C 20 220, 180 400, 460 406"
+            fill="none"
+            stroke="var(--path-a)"
+            stroke-width="2.2"
+            stroke-dasharray="7 5"
+            marker-end="url(#arr-a)"
+          />
+          <text x="112" y="280" class="edge-label-a">A · in-process (no http)</text>
+
+          <!-- FastAPI -> Pydantic -> VADER -->
+          <path
+            d="M 460 300 L 460 330"
+            fill="none"
+            stroke="#5c6d8e"
+            stroke-width="2"
+            marker-end="url(#arr)"
+          />
+          <path
+            d="M 460 388 L 460 404"
+            fill="none"
+            stroke="#5c6d8e"
+            stroke-width="2"
+            marker-end="url(#arr)"
+          />
+          <g id="legend" transform="translate(24, 350)">
+            <line x1="0" y1="6" x2="32" y2="6" stroke="var(--path-a)" stroke-width="2" stroke-dasharray="6 4" />
+            <text x="40" y="10" class="node-sub" style="font-size: 10px; fill: #7d8898">Path A in-process</text>
+            <line x1="0" y1="26" x2="32" y2="26" stroke="var(--path-b)" stroke-width="2" />
+            <text x="40" y="30" class="node-sub" style="font-size: 10px; fill: #7d8898">Path B to API</text>
+            <line x1="0" y1="46" x2="32" y2="46" stroke="#5c6d8e" stroke-width="2" />
+            <text x="40" y="50" class="node-sub" style="font-size: 10px; fill: #7d8898">Other HTTP to API</text>
+          </g>
+        </svg>
       </div>
 
-      <h2>2. API request path</h2>
-      <div class="diagram" aria-label="API sequence">
-        <div class="seq">
-          <span class="step">Client</span>
-          <span class="arrow-inline" aria-hidden="true">→</span>
-          <span class="step">POST JSON</span>
-          <span class="arrow-inline">→</span>
-          <span class="step">FastAPI</span>
-          <span class="arrow-inline">→</span>
-          <span class="step">Pydantic</span>
-        </div>
-        <p class="err" style="text-align: center; margin: 0.4rem 0 0.8rem">invalid / empty text → 422</p>
-        <div class="seq">
-          <span class="step">Pydantic OK</span>
-          <span class="arrow-inline">→</span>
-          <span class="step">VADER in service</span>
-          <span class="arrow-inline">→</span>
-          <span class="step">200 JSON</span>
-        </div>
-        <p style="margin: 0.9rem 0 0; font-size: 0.82rem; color: var(--muted)">
-          On app startup, <code style="color: #c5d0e0">warm_vader()</code> runs in lifespan so the first
-          user request is not cold.
-        </p>
+      <h2>HTTP call sequence (detail)</h2>
+      <div class="canvas" role="img" aria-label="HTTP sequence">
+        <svg viewBox="0 0 880 120" xmlns="http://www.w3.org/2000/svg" style="font-family: Inter, sans-serif">
+          <rect width="880" height="120" fill="var(--panel)" />
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#6a7a9a" />
+            </marker>
+          </defs>
+          <g font-size="12" font-weight="600" fill="#e8ecf4" text-anchor="middle">
+            <rect x="28" y="40" width="120" height="48" rx="8" fill="var(--node)" stroke="var(--border)" />
+            <text x="88" y="70">Client</text>
+            <text x="88" y="90" style="font-size: 9px" fill="var(--muted)">JSON body</text>
+
+            <rect x="200" y="40" width="120" height="48" rx="8" fill="var(--node-hi)" stroke="var(--accent)" />
+            <text x="260" y="70">FastAPI</text>
+            <text x="260" y="90" style="font-size: 9px" fill="var(--muted)">route</text>
+
+            <rect x="372" y="40" width="120" height="48" rx="8" fill="var(--node)" stroke="var(--border)" />
+            <text x="432" y="70">Pydantic</text>
+            <text x="432" y="90" style="font-size: 9px" fill="var(--muted)">validates</text>
+
+            <rect x="544" y="40" width="120" height="48" rx="8" fill="#132218" stroke="var(--path-a)" />
+            <text x="604" y="70">VADER</text>
+            <text x="604" y="90" style="font-size: 9px" fill="var(--muted)">service.py</text>
+
+            <rect x="716" y="40" width="120" height="48" rx="8" fill="var(--node)" stroke="var(--border)" />
+            <text x="776" y="70">200 JSON</text>
+            <text x="776" y="90" style="font-size: 9px" fill="var(--muted)">response</text>
+          </g>
+          <line
+            x1="148"
+            y1="64"
+            x2="200"
+            y2="64"
+            stroke="#6a7a9a"
+            stroke-width="2"
+            marker-end="url(#arr2)"
+          />
+          <line
+            x1="320"
+            y1="64"
+            x2="372"
+            y2="64"
+            stroke="#6a7a9a"
+            stroke-width="2"
+            marker-end="url(#arr2)"
+          />
+          <line
+            x1="492"
+            y1="64"
+            x2="544"
+            y2="64"
+            stroke="#6a7a9a"
+            stroke-width="2"
+            marker-end="url(#arr2)"
+          />
+          <line
+            x1="664"
+            y1="64"
+            x2="716"
+            y2="64"
+            stroke="#6a7a9a"
+            stroke-width="2"
+            marker-end="url(#arr2)"
+          />
+        </svg>
       </div>
 
-      <h2>3. Streamlit — local engine only</h2>
-      <div class="diagram" aria-label="Streamlit local path">
-        <div class="seq">
-          <span class="step">User</span>
-          <span class="arrow-inline">→</span>
-          <span class="step">Streamlit</span>
-          <span class="arrow-inline">→</span>
-          <span class="step">analyze_sentiment</span>
-          <span class="arrow-inline">→</span>
-          <span class="step">UI metrics + bar</span>
-        </div>
-        <p style="margin: 0.8rem 0 0; font-size: 0.82rem; color: var(--muted)">
-          Same return shape as the API; use <code style="color: #c5d0e0">model_dump(mode="json")</code> to
-          match wire format.
-        </p>
+      <h2>Path A only (in-process, no wire)</h2>
+      <div class="canvas" role="img" aria-label="Local in-process path">
+        <svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg" style="font-family: Inter, sans-serif">
+          <rect width="700" height="100" fill="var(--panel)" />
+          <defs>
+            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#1fa86e" />
+            </marker>
+          </defs>
+          <g font-size="12" text-anchor="middle" font-weight="600">
+            <rect x="40" y="36" width="100" height="44" rx="8" fill="var(--node)" stroke="var(--border)" />
+            <text x="90" y="64" fill="var(--text)">User</text>
+            <line
+              x1="140"
+              y1="58"
+              x2="188"
+              y2="58"
+              stroke="var(--path-a)"
+              stroke-width="2.5"
+              marker-end="url(#arr3)"
+            />
+            <rect x="196" y="32" width="120" height="52" rx="8" fill="var(--node-hi)" stroke="var(--border)" />
+            <text x="256" y="56" fill="var(--text)">Streamlit</text>
+            <text x="256" y="72" style="font-size: 9px" fill="var(--muted)">text + Analyze</text>
+            <line
+              x1="316"
+              y1="58"
+              x2="360"
+              y2="58"
+              stroke="var(--path-a)"
+              stroke-width="2.5"
+              marker-end="url(#arr3)"
+              stroke-dasharray="4 3"
+            />
+            <rect x="368" y="28" width="200" height="60" rx="8" fill="#132218" stroke="var(--path-a)" />
+            <text x="468" y="55" fill="#8fe8c0" font-size="12">service.analyze_sentiment</text>
+            <text x="468" y="72" style="font-size: 9px" fill="var(--muted)">VADER in-process</text>
+            <line
+              x1="568"
+              y1="58"
+              x2="620"
+              y2="58"
+              stroke="var(--path-a)"
+              stroke-width="2"
+              marker-end="url(#arr3)"
+            />
+            <rect x="628" y="32" width="64" height="48" rx="8" fill="var(--node)" stroke="var(--border)" />
+            <text x="660" y="62" fill="var(--text)" font-size="11">UI</text>
+            <text x="660" y="76" style="font-size: 8px" fill="var(--muted)">results</text>
+          </g>
+        </svg>
       </div>
+      <p class="sub" style="margin: -0.5rem 0 1.5rem; font-size: 0.82rem; max-width: 65ch">
+        Same Python module as the API; no request leaves the process unless you turn on
+        <strong style="color: var(--text)">Call HTTP API</strong> (Path B in the first diagram).
+      </p>
 
-      <h2>4. Module stack</h2>
-      <div class="diagram" aria-label="File layers">
-        <div class="stack">
-          <div class="box">
-            <span><code>.env</code> · <code>SENTIMENT_*</code></span>
-            <span>config</span>
-          </div>
-          <div class="arrow" style="font-size: 0.9rem">⬇</div>
-          <div class="box">
-            <span><code>config.py</code> · Settings</span>
-            <span>Pydantic settings</span>
-          </div>
-          <div class="arrow" style="font-size: 0.9rem">⬇</div>
-          <div class="box">
-            <span><code>main.py</code> · routes + CORS + lifespan</span>
-            <span>FastAPI</span>
-          </div>
-          <div class="arrow" style="font-size: 0.9rem">⬇</div>
-          <div class="box">
-            <span><code>schemas.py</code></span>
-            <span>contracts</span>
-          </div>
-          <div class="arrow" style="font-size: 0.9rem">⬇</div>
-          <div class="box" style="border-color: rgba(62, 207, 142, 0.35)">
-            <span><code>service.py</code> → VADER</span>
-            <span>scoring</span>
-          </div>
-        </div>
-      </div>
-
-      <p class="footer-note">
-        Open this file in any browser. Repo:
-        <a href="https://github.com/dpkrobomad/100-days-ai-day-01-sentiment-analyzer" style="color: var(--accent)"
+      <p class="footer">
+        Open this file in a browser. No server required. Repo:
+        <a href="https://github.com/dpkrobomad/100-days-ai-day-01-sentiment-analyzer" target="_blank" rel="noopener"
           >100-days-ai-day-01-sentiment-analyzer</a
         >
         · Day 1

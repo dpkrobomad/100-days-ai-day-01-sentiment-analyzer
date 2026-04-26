@@ -1,10 +1,8 @@
 # Workflow & architecture
 
-**Visual diagram (HTML — open in a browser for best look):** [`workflow.html`](workflow.html)  
-Also viewable on GitHub if you use **Raw** + save locally, or open the file from a clone:  
-`file:///.../docs/workflow.html`
+**Workflow diagram (HTML canvas — open in a browser):** [`workflow.html`](workflow.html)  
 
-The HTML page is self-contained (dark theme, **Outfit** font); no Mermaid or external diagram tools.
+The page is a **node-and-arrow** diagram: SVG flowchart (entry → API stack → VADER), a horizontal **HTTP sequence** strip, and a **Path A** in-process line. Download or clone and open the file locally (`file://…`); GitHub’s UI won’t run HTML as a page.
 
 ## Text summary
 
