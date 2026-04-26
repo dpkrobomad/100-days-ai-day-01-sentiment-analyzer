@@ -1,41 +1,35 @@
-# Day 1 — Sentiment Analyzer API
+# Sentiment analyzer API (Day 1)
 
-**Repository:** <https://github.com/dpkrobomad/100-days-ai-day-01-sentiment-analyzer> · Licensed under **MIT** (see `LICENSE`).
+Small FastAPI service: send text, get **positive / negative / neutral** plus VADER’s scores. Optional Streamlit app for a quick look without curl.
 
-FastAPI service that classifies text as **positive**, **negative**, or **neutral** using the [VADER](https://github.com/cjhutto/vaderSentiment) (Valence Aware Dictionary and sEntiment Reasoner) lexicon. Returns label, per-class style confidence, compound score, and raw scores. Includes a **Streamlit** “Sentiment Lab” UI with a dark, product-style layout.
+- **API docs (when running):** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)  
+- **Repository:** <https://github.com/dpkrobomad/100-days-ai-day-01-sentiment-analyzer>  
+- **License:** MIT — see `LICENSE`
 
-- **OpenAPI / Swagger** — [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) when the API is running.
+## What this is
 
-## Why VADER
-
-Rule-based, fast, no training data, and interpretable. Suited to short social/review text in English. For other languages or long-form content, you would swap the backend for embeddings or a transformer (same API contract).
-
-## Requirements
-
-- Python 3.11+
+VADER is a simple lexicon-based scorer for short English (reviews, short posts, etc.). It’s not the latest transformer — it *is* something you can run anywhere and explain. Swap the backend later; keep the same route shape if you want.
 
 ## Setup
 
 ```bash
-cd day-01-sentiment-analyzer-api
 python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev,ui]"
-cp .env.example .env  # optional; defaults are fine locally
 ```
+
+`ui` pulls in Streamlit for the demo app. API-only: `pip install -e .`
 
 ## Run the API
 
 ```bash
-# from project root, with venv active
-export PYTHONPATH=src  # only if you did not pip install -e .
 uvicorn sentiment_analyzer.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-- Docs: <http://127.0.0.1:8000/docs>  
-- Health: <http://127.0.0.1:8000/health>
+Health: `GET http://127.0.0.1:8000/health`  
+Scoring: `POST http://127.0.0.1:8000/api/v1/sentiment` with `{"text": "..."}`
 
-### Example (curl)
+### curl example
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/api/v1/sentiment \
@@ -43,38 +37,32 @@ curl -s -X POST http://127.0.0.1:8000/api/v1/sentiment \
   -d '{"text": "I love this product!"}' | python3 -m json.tool
 ```
 
-## Run the Streamlit UI
+## Run Streamlit (optional)
 
 ```bash
 streamlit run streamlit_app.py
 ```
 
-Toggle **“Call HTTP API”** in the sidebar to hit the live FastAPI service, or use the in-process engine (same logic).
+Sidebar has an option to call the live API — start Uvicorn first if you use that.
 
-## Tests
+## Tests / lint
 
 ```bash
 pytest -q
 ruff check src tests
 ```
 
-## Video (YouTube)
+## Layout
 
-- **`YOUTUBE_SCRIPT.md`** — full **screen-recording** script: capture layout, chapters, on-screen callouts, narration, metadata, and a **Shorts** cut-down. Use it when recording a long-form or Short walkthrough.
-
-## Project layout
-
-| Path | Purpose |
-|------|---------|
-| `src/sentiment_analyzer/main.py` | FastAPI app, CORS, routes |
-| `src/sentiment_analyzer/service.py` | VADER analysis (shared) |
-| `src/sentiment_analyzer/schemas.py` | Pydantic request/response |
-| `src/sentiment_analyzer/config.py` | `SENTIMENT_*` env settings |
-| `streamlit_app.py` | Optional demo UI |
-| `LINKEDIN_POST.md` | Ready-to-post copy |
-| `DEMO_SCRIPT.md` | Step-by-step live/LinkedIn demo |
-| `YOUTUBE_SCRIPT.md` | YouTube / screen-capture walkthrough |
+| Path | What it does |
+|------|----------------|
+| `src/sentiment_analyzer/main.py` | App, routes, CORS |
+| `src/sentiment_analyzer/service.py` | VADER call |
+| `src/sentiment_analyzer/schemas.py` | Request/response |
+| `src/sentiment_analyzer/config.py` | Env: `SENTIMENT_*` |
+| `streamlit_app.py` | UI |
 
 ## Author
 
-[dpkrobomad](https://github.com/dpkrobomad) — 100 Days of AI with Python, Day 1.
+**Deepak Radhakrishnan** — AEROSPACE | AI | ROBOTICS — <https://www.deepakradhakrishnan.com>  
+Code on GitHub: [@dpkrobomad](https://github.com/dpkrobomad)

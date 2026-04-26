@@ -10,3 +10,8 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+
+# Local only — not published (kept on your machine; never commit)
+LINKEDIN_POST.md
+DEMO_SCRIPT.md
+YOUTUBE_SCRIPT.md

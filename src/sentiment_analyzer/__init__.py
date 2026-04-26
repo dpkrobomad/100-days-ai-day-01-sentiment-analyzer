@@ -1,3 +1,3 @@
-"""Day 1 — Sentiment Analyzer API (VADER lexicon + FastAPI + Streamlit)."""
+"""Public API: text in, sentiment + VADER scores out. Streamlit optional."""
 
 __version__ = "1.0.0"

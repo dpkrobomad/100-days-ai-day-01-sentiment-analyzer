@@ -77,7 +77,7 @@ with c1:
         unsafe_allow_html=True,
     )
 with c2:
-    st.caption("Day 1 — 100 Days of AI with Python")
+    st.caption("Day 1 build · Deepak · deepakradhakrishnan.com")
     try:
         import importlib.metadata as m
 
@@ -142,4 +142,4 @@ if go:
                     st.json({"label": out["label"], "confidence": conf, "compound": compound, "scores": scores})
 
 st.divider()
-st.caption("API: `uvicorn sentiment_analyzer.main:app --reload` → http://127.0.0.1:8000/docs")
+st.caption("Run the API: `uvicorn sentiment_analyzer.main:app --reload` → http://127.0.0.1:8000/docs · @dpkrobomad on GitHub")

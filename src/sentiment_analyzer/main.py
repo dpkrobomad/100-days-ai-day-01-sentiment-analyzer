@@ -34,8 +34,8 @@ def create_app() -> FastAPI:
         version=__version__,
         lifespan=lifespan,
         contact={
-            "name": "100 Days of AI",
-            "url": "https://github.com/dpkrobomad",
+            "name": "Deepak Radhakrishnan",
+            "url": "https://www.deepakradhakrishnan.com",
         },
         license_info={"name": "MIT"},
         openapi_tags=[
