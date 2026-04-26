@@ -14,8 +14,8 @@ _src = _root / "src"
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
-import streamlit as st  # noqa: E402
 import httpx  # noqa: E402
+import streamlit as st  # noqa: E402
 
 from sentiment_analyzer.service import analyze_sentiment  # noqa: E402
 
@@ -26,10 +26,21 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+_DEFAULT = (
+    "I love this product — shipping was fast and the quality exceeded my expectations."
+)
 if "t" not in st.session_state:
-    st.session_state.t = (
-        "I love this product — shipping was fast and the quality exceeded my expectations."
-    )
+    st.session_state.t = _DEFAULT
+
+SAMPLES = [
+    "This is the best launch we've had — the team really delivered.",
+    "Terrible support. Still waiting for a refund. Very disappointed.",
+    "The meeting is at 3pm tomorrow. Please join the call.",
+]
+
+
+def _set_sample(s: str) -> None:
+    st.session_state.t = s
 
 _PREMIUM_CSS = """
 <style>
@@ -86,22 +97,21 @@ with c2:
         pass
 
 st.subheader("Analyze text")
+
+# Callbacks set `t` before the text_area widget is created (Streamlit order).
+with st.expander("Sample phrases"):
+    for i, s in enumerate(SAMPLES):
+        st.button(
+            s[:70] + ("…" if len(s) > 70 else ""),
+            key=f"sample_{i}",
+            on_click=_set_sample,
+            args=(s,),
+        )
+
 text = st.text_area("Input", label_visibility="collapsed", key="t", height=200, placeholder="Paste text…")
 cols = st.columns([1, 3])
 with cols[0]:
     go = st.button("Analyze", type="primary", use_container_width=True)
-
-with st.expander("Sample phrases"):
-    for i, s in enumerate(
-        [
-            "This is the best launch we've had — the team really delivered.",
-            "Terrible support. Still waiting for a refund. Very disappointed.",
-            "The meeting is at 3pm tomorrow. Please join the call.",
-        ]
-    ):
-        if st.button(s[:70] + ("…" if len(s) > 70 else ""), key=f"sample_{i}"):
-            st.session_state.t = s
-            st.rerun()
 
 if go:
     t = (text or "").strip()
