@@ -1,5 +1,7 @@
 # Day 1 — Sentiment Analyzer API
 
+**Repository:** <https://github.com/dpkrobomad/100-days-ai-day-01-sentiment-analyzer> · Licensed under **MIT** (see `LICENSE`).
+
 FastAPI service that classifies text as **positive**, **negative**, or **neutral** using the [VADER](https://github.com/cjhutto/vaderSentiment) (Valence Aware Dictionary and sEntiment Reasoner) lexicon. Returns label, per-class style confidence, compound score, and raw scores. Includes a **Streamlit** “Sentiment Lab” UI with a dark, product-style layout.
 
 - **OpenAPI / Swagger** — [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) when the API is running.
